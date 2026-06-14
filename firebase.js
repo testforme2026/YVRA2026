@@ -13,6 +13,10 @@ try {
     const serviceAccount = require(serviceAccountPath);
     credentialOption = admin.credential.cert(serviceAccount);
     console.log('Firebase initialized using local serviceAccountKey.json file.');
+  } else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    credentialOption = admin.credential.cert(serviceAccount);
+    console.log('Firebase initialized using FIREBASE_SERVICE_ACCOUNT environment variable.');
   } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
     // Falls back to standard environment-configured credentials path
     credentialOption = admin.credential.applicationDefault();
