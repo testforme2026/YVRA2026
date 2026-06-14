@@ -19,9 +19,9 @@ import {
   AlertCircle
 } from 'lucide-react';
 
-const API_BASE = window.location.origin.includes('5173') 
+const API_BASE = import.meta.env.VITE_API_URL || (window.location.origin.includes('5173') 
   ? 'http://localhost:3000' 
-  : '';
+  : '');
 
 function App() {
   // Navigation & Auth States
