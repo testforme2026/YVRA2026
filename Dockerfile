@@ -10,6 +10,9 @@ RUN npm install --production
 # Bundle app source
 COPY . .
 
+# Set environment variable for Port
+ENV PORT=7860
+
 # Expose port (Hugging Face Spaces uses 7860 by default)
 EXPOSE 7860
 
