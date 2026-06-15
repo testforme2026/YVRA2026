@@ -37,7 +37,7 @@ app.post('/webhook/messenger', handleMessage);
 // REST API FOR ADMIN PRODUCTS CRUD & CONFIG
 
 // GET all products
-app.get('/api/products', async (req, res) => {
+app.get('/api/v1/products', async (req, res) => {
   try {
     const products = await getInventory();
     res.status(200).json(products);
@@ -47,7 +47,7 @@ app.get('/api/products', async (req, res) => {
 });
 
 // CREATE a product
-app.post('/api/products', async (req, res) => {
+app.post('/api/v1/products', async (req, res) => {
   try {
     const { name, price, description, stock, imageUrl, variants, featured } = req.body;
     if (!name || price === undefined) {
@@ -95,7 +95,7 @@ app.post('/api/products', async (req, res) => {
 });
 
 // UPDATE a product
-app.put('/api/products/:id', async (req, res) => {
+app.put('/api/v1/products/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { name, price, description, stock, imageUrl, variants, featured } = req.body;
@@ -144,7 +144,7 @@ app.put('/api/products/:id', async (req, res) => {
 });
 
 // DELETE a product
-app.delete('/api/products/:id', async (req, res) => {
+app.delete('/api/v1/products/:id', async (req, res) => {
   try {
     const { id } = req.params;
     await productsRef.doc(id).delete();
@@ -155,7 +155,7 @@ app.delete('/api/products/:id', async (req, res) => {
 });
 
 // GET shop settings
-app.get('/api/settings', async (req, res) => {
+app.get('/api/v1/settings', async (req, res) => {
   try {
     const settings = await getSettings();
     res.status(200).json(settings);
@@ -165,7 +165,7 @@ app.get('/api/settings', async (req, res) => {
 });
 
 // UPDATE shop settings
-app.post('/api/settings', async (req, res) => {
+app.post('/api/v1/settings', async (req, res) => {
   try {
     const success = await updateSettings(req.body);
     if (success) {

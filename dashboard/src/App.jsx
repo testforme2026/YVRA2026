@@ -81,11 +81,11 @@ function App() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const prodRes = await fetch(`${API_BASE}/api/products?t=${Date.now()}`);
+      const prodRes = await fetch(`${API_BASE}/api/v1/products?t=${Date.now()}`);
       const prodData = await prodRes.json();
       setProducts(prodData);
 
-      const setRes = await fetch(`${API_BASE}/api/settings?t=${Date.now()}`);
+      const setRes = await fetch(`${API_BASE}/api/v1/settings?t=${Date.now()}`);
       const setData = await setRes.json();
       setSettings(setData);
     } catch (error) {
@@ -174,8 +174,8 @@ function App() {
     try {
       const method = isEditMode ? 'PUT' : 'POST';
       const url = isEditMode 
-        ? `${API_BASE}/api/products/${productForm.id}` 
-        : `${API_BASE}/api/products`;
+        ? `${API_BASE}/api/v1/products/${productForm.id}` 
+        : `${API_BASE}/api/v1/products`;
 
       const response = await fetch(url, {
         method,
@@ -200,7 +200,7 @@ function App() {
     if (!window.confirm('Are you sure you want to delete this product?')) return;
 
     try {
-      const response = await fetch(`${API_BASE}/api/products/${id}`, {
+      const response = await fetch(`${API_BASE}/api/v1/products/${id}`, {
         method: 'DELETE'
       });
 
@@ -218,7 +218,7 @@ function App() {
   const handleSettingsSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${API_BASE}/api/settings`, {
+      const response = await fetch(`${API_BASE}/api/v1/settings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings)
