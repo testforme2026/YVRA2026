@@ -1352,7 +1352,7 @@ function App() {
                 src="/yvra.png" 
                 alt="YVRA Logo" 
                 style={{ 
-                  height: '48px', 
+                  height: '150px', 
                   objectFit: 'contain'
                 }} 
               />
@@ -1434,7 +1434,7 @@ function App() {
                 src="/yvra.png" 
                 alt="YVRA Logo" 
                 style={{ 
-                  height: '48px', 
+                  height: '150px', 
                   objectFit: 'contain'
                 }} 
               />
