@@ -23,6 +23,32 @@ const API_BASE = import.meta.env.VITE_API_URL || (window.location.origin.include
   ? 'http://localhost:3000' 
   : '');
 
+const getColorHex = (color) => {
+  if (!color) return 'transparent';
+  const name = color.trim().toLowerCase();
+  const map = {
+    'black': '#000000',
+    'white': '#ffffff',
+    'pink': '#ffc0cb',
+    'cream': '#fffdd0',
+    'rose': '#ff007f',
+    'red': '#ff0000',
+    'blue': '#0000ff',
+    'green': '#008000',
+    'olive': '#808000',
+    'navy': '#000080',
+    'gold': '#ffd700',
+    'silver': '#c0c0c0',
+    'gray': '#808080',
+    'grey': '#808080',
+    'brown': '#a52a2a',
+    'yellow': '#ffff00',
+    'purple': '#800080',
+    'orange': '#ffa500'
+  };
+  return map[name] || name;
+};
+
 function App() {
   // Navigation & Auth States
   const [view, setView] = useState('storefront'); // 'storefront' | 'login' | 'admin'
@@ -755,12 +781,20 @@ function App() {
                             return (
                               <>
                                 {colors.length > 0 && (
-                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', alignItems: 'center' }}>
+                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
                                     <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>Colors:</span>
                                     {colors.map((c, idx) => (
-                                      <span key={idx} style={{ fontSize: '0.7rem', backgroundColor: 'rgba(214, 91, 124, 0.08)', color: 'var(--color-primary)', padding: '2px 8px', borderRadius: '10px', fontWeight: 500 }}>
-                                        {c}
-                                      </span>
+                                      <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                                        <div style={{
+                                          width: '12px',
+                                          height: '12px',
+                                          borderRadius: '50%',
+                                          backgroundColor: getColorHex(c),
+                                          border: '1px solid rgba(0,0,0,0.15)',
+                                          boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                                        }} />
+                                        <span style={{ fontSize: '0.58rem', color: 'var(--color-text-muted)', fontWeight: 500, lineHeight: 1 }}>{c}</span>
+                                      </div>
                                     ))}
                                   </div>
                                 )}
@@ -1256,13 +1290,24 @@ function App() {
                         <div key={idx} style={{
                           display: 'flex',
                           justifyContent: 'space-between',
+                          alignItems: 'center',
                           padding: '6px 12px',
                           backgroundColor: 'var(--color-bg-deep)',
                           borderRadius: '8px',
                           fontSize: '0.85rem',
                           border: '1px solid var(--color-border)'
                         }}>
-                          <span><strong>{v.color}</strong> / Size {v.size}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{
+                              width: '14px',
+                              height: '14px',
+                              borderRadius: '50%',
+                              backgroundColor: getColorHex(v.color),
+                              border: '1px solid rgba(0,0,0,0.15)',
+                              flexShrink: 0
+                            }} />
+                            <span><strong>{v.color}</strong> / Size {v.size}</span>
+                          </div>
                           <span style={{ color: v.stock > 0 ? 'var(--color-primary)' : '#e63946', fontWeight: 600 }}>
                             {v.stock > 0 ? `${v.stock} in stock` : 'Out of stock'}
                           </span>
