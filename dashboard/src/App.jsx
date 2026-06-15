@@ -81,11 +81,11 @@ function App() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const prodRes = await fetch(`${API_BASE}/api/products`);
+      const prodRes = await fetch(`${API_BASE}/api/products?t=${Date.now()}`);
       const prodData = await prodRes.json();
       setProducts(prodData);
 
-      const setRes = await fetch(`${API_BASE}/api/settings`);
+      const setRes = await fetch(`${API_BASE}/api/settings?t=${Date.now()}`);
       const setData = await setRes.json();
       setSettings(setData);
     } catch (error) {
