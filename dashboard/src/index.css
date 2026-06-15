@@ -45,6 +45,22 @@ body {
   background-attachment: fixed;
 }
 
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -2;
+  background-image: url('/yvra.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 50% auto;
+  opacity: 0.03;
+  pointer-events: none;
+}
+
 /* Glassmorphism utility with pink blur overlay */
 .glass {
   background: rgba(255, 255, 255, 0.85);

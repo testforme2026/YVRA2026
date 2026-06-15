@@ -290,7 +290,7 @@ function App() {
             onDoubleClick={() => setView(isLoggedIn ? 'admin' : 'login')}
           >
             <img 
-              src="/logo.png" 
+              src="/yvra.png" 
               alt="YVRA" 
               style={{ 
                 height: '40px', 
@@ -1349,7 +1349,7 @@ function App() {
 
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
               <img 
-                src="/logo.png" 
+                src="/yvra.png" 
                 alt="YVRA Logo" 
                 style={{ 
                   height: '48px', 
@@ -1431,7 +1431,7 @@ function App() {
 
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
               <img 
-                src="/logo.png" 
+                src="/yvra.png" 
                 alt="YVRA Logo" 
                 style={{ 
                   height: '48px', 
