@@ -289,32 +289,14 @@ function App() {
             onClick={() => setView('storefront')}
             onDoubleClick={() => setView(isLoggedIn ? 'admin' : 'login')}
           >
-            <div style={{
-              width: '44px',
-              height: '44px',
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              {/* Logo Blossom Silhouette */}
-              <svg viewBox="0 0 100 100" width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0, color: 'var(--color-primary)' }}>
-                <path fill="currentColor" d="M50,15 C40,5 30,10 32,22 C34,34 50,45 50,45 C50,45 66,34 68,22 C70,10 60,5 50,15 Z" />
-                <path fill="currentColor" d="M50,85 C40,95 30,90 32,78 C34,66 50,55 50,55 C50,55 66,66 68,78 C70,90 60,95 50,85 Z" />
-                <path fill="currentColor" d="M15,50 C5,40 10,30 22,32 C34,34 45,50 45,50 C45,50 34,66 22,68 C10,70 5,60 15,50 Z" />
-                <path fill="currentColor" d="M85,50 C95,40 90,30 78,32 C66,34 55,50 55,50 C55,50 66,66 78,68 C90,70 95,60 85,50 Z" />
-                <circle cx="50" cy="50" r="18" fill="#fffafd" />
-              </svg>
-              <span style={{
-                position: 'relative',
-                fontFamily: 'var(--font-heading)',
-                fontWeight: 'bold',
-                fontSize: '1.2rem',
-                color: '#421a22',
-                zIndex: 2,
-                marginTop: '-2px'
-              }}>Y</span>
-            </div>
+            <img 
+              src="/logo.png" 
+              alt="YVRA" 
+              style={{ 
+                height: '40px', 
+                objectFit: 'contain'
+              }} 
+            />
             <span style={{
               fontFamily: 'var(--font-heading)',
               fontSize: '1.8rem',
@@ -1365,15 +1347,15 @@ function App() {
               <X size={20} />
             </button>
 
-            {/* Floral decoration */}
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', color: 'var(--color-primary)' }}>
-              <svg width="48" height="48" viewBox="0 0 100 100" fill="currentColor">
-                <path d="M50,15 C40,5 30,10 32,22 C34,34 50,45 50,45 C50,45 66,34 68,22 C70,10 60,5 50,15 Z" />
-                <path d="M50,85 C40,95 30,90 32,78 C34,66 50,55 50,55 C50,55 66,66 68,78 C70,90 60,95 50,85 Z" />
-                <path d="M15,50 C5,40 10,30 22,32 C34,34 45,50 45,50 C45,50 34,66 22,68 C10,70 5,60 15,50 Z" />
-                <path d="M85,50 C95,40 90,30 78,32 C66,34 55,50 55,50 C55,50 66,66 78,68 C90,70 95,60 85,50 Z" />
-                <circle cx="50" cy="50" r="12" fill="#fffafd" />
-              </svg>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+              <img 
+                src="/logo.png" 
+                alt="YVRA Logo" 
+                style={{ 
+                  height: '48px', 
+                  objectFit: 'contain'
+                }} 
+              />
             </div>
 
             <h2 style={{ fontSize: '2rem', fontFamily: 'var(--font-heading)', color: '#421a22', marginBottom: '18px' }}>
@@ -1447,15 +1429,15 @@ function App() {
               <X size={20} />
             </button>
 
-            {/* Floral decoration */}
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', color: 'var(--color-primary)' }}>
-              <svg width="48" height="48" viewBox="0 0 100 100" fill="currentColor">
-                <path d="M50,15 C40,5 30,10 32,22 C34,34 50,45 50,45 C50,45 66,34 68,22 C70,10 60,5 50,15 Z" />
-                <path d="M50,85 C40,95 30,90 32,78 C34,66 50,55 50,55 C50,55 66,66 68,78 C70,90 60,95 50,85 Z" />
-                <path d="M15,50 C5,40 10,30 22,32 C34,34 45,50 45,50 C45,50 34,66 22,68 C10,70 5,60 15,50 Z" />
-                <path d="M85,50 C95,40 90,30 78,32 C66,34 55,50 55,50 C55,50 66,66 78,68 C90,70 95,60 85,50 Z" />
-                <circle cx="50" cy="50" r="12" fill="#fffafd" />
-              </svg>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+              <img 
+                src="/logo.png" 
+                alt="YVRA Logo" 
+                style={{ 
+                  height: '48px', 
+                  objectFit: 'contain'
+                }} 
+              />
             </div>
 
             <h2 style={{ fontSize: '2rem', fontFamily: 'var(--font-heading)', color: '#421a22', marginBottom: '18px' }}>
