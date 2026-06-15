@@ -188,9 +188,13 @@ app.use((err, req, res, next) => {
 });
 
 // Start the server
-app.listen(PORT, () => {
-  console.log(`==================================================`);
-  console.log(`  Server is listening on port: ${PORT}`);
-  console.log(`  Webhook URL: http://localhost:${PORT}/webhook/messenger`);
-  console.log(`==================================================`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`==================================================`);
+    console.log(`  Server is listening on port: ${PORT}`);
+    console.log(`  Webhook URL: http://localhost:${PORT}/webhook/messenger`);
+    console.log(`==================================================`);
+  });
+}
+
+module.exports = app;
