@@ -40,17 +40,15 @@ function verifyWebhook(req, res) {
  * POST /webhook/messenger
  * Receives incoming messaging events from Facebook.
  */
-function handleMessage(req, res) {
+async function handleMessage(req, res) {
   const body = req.body;
 
   // Check this is an event from a page subscription
   if (body.object === 'page') {
-    // Iterate over each entry - there may be multiple if batched
-    body.entry.forEach(async (entry) => {
-      // Get the message. entry.messaging is an array, but standard setup
-      // will usually contain only one message at a time
+    // Iterate over each entry - using for...of to correctly await promises in serverless env
+    for (const entry of body.entry) {
       const webhookEvent = entry.messaging ? entry.messaging[0] : null;
-      if (!webhookEvent) return;
+      if (!webhookEvent) continue;
 
       console.log('[Webhook Message] Event received:', JSON.stringify(webhookEvent, null, 2));
 
@@ -59,17 +57,17 @@ function handleMessage(req, res) {
       const userMessage = webhookEvent.message ? webhookEvent.message.text : null;
 
       if (userMessage) {
-        // Asynchronously process the message and send the response back
-        // to avoid blocking the webhook response. Facebook requires a 200 OK within 20 seconds.
-        processMessageAndReply(senderId, userMessage).catch((err) => {
+        try {
+          await processMessageAndReply(senderId, userMessage);
+        } catch (err) {
           console.error('[Webhook Message] Error processing messaging event:', err);
-        });
+        }
       } else {
         console.log('[Webhook Message] Event does not contain text. Skipping response.');
       }
-    });
+    }
 
-    // Returns a '200 OK' to all requests
+    // Returns a '200 OK' after processing is complete
     res.status(200).send('EVENT_RECEIVED');
   } else {
     // Return a '404 Not Found' if event is not from a page subscription
