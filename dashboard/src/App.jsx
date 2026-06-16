@@ -105,6 +105,13 @@ function App() {
   // Fetch initial data
   useEffect(() => {
     fetchData();
+
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const fetchData = async () => {
@@ -178,7 +185,7 @@ function App() {
       stock: product.stock,
       description: product.description || '',
       imageUrl: product.imageUrl || '',
-      variants: product.variants || [],
+      variants: Array.isArray(product.variants) ? product.variants : [],
       featured: product.featured || false
     });
     setIsEditMode(true);
@@ -230,7 +237,7 @@ function App() {
     }
 
     // Sum variants stock if present
-    const finalStock = productForm.variants && productForm.variants.length > 0
+    const finalStock = Array.isArray(productForm.variants) && productForm.variants.length > 0
       ? productForm.variants.reduce((sum, v) => sum + Number(v.stock || 0), 0)
       : Number(productForm.stock || 0);
 
@@ -375,11 +382,15 @@ function App() {
           </div>
 
           {/* Dribbble Style Center Navigation Menu */}
-          {!isMobile && view === 'storefront' && (
-            <nav style={{ display: 'flex', gap: '40px', alignItems: 'center' }}>
-              <a href="#collection" style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-text-main)', letterSpacing: '1px', textTransform: 'uppercase', position: 'relative' }}>Collection</a>
-              <a href="#about" style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-text-muted)', letterSpacing: '1px', textTransform: 'uppercase' }} onClick={(e) => { e.preventDefault(); setShowAboutModal(true); }}>About Boutique</a>
-              <a href="#footer" style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-text-muted)', letterSpacing: '1px', textTransform: 'uppercase' }} onClick={(e) => { e.preventDefault(); setShowContactModal(true); }}>Contact Us</a>
+          {view === 'storefront' && (
+            <nav style={{ 
+              display: 'flex', 
+              gap: isMobile ? '12px' : '40px', 
+              alignItems: 'center' 
+            }}>
+              {!isMobile && <a href="#collection" style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-text-main)', letterSpacing: '1px', textTransform: 'uppercase', position: 'relative' }}>Collection</a>}
+              <a href="#about" style={{ fontSize: isMobile ? '0.75rem' : '0.9rem', fontWeight: 600, color: 'var(--color-text-muted)', letterSpacing: isMobile ? '0.5px' : '1px', textTransform: 'uppercase' }} onClick={(e) => { e.preventDefault(); setShowAboutModal(true); }}>{isMobile ? 'About' : 'About Boutique'}</a>
+              <a href="#footer" style={{ fontSize: isMobile ? '0.75rem' : '0.9rem', fontWeight: 600, color: 'var(--color-text-muted)', letterSpacing: isMobile ? '0.5px' : '1px', textTransform: 'uppercase' }} onClick={(e) => { e.preventDefault(); setShowContactModal(true); }}>{isMobile ? 'Contact' : 'Contact Us'}</a>
             </nav>
           )}
 
@@ -815,7 +826,7 @@ function App() {
                       </p>
 
                       {/* Storefront Variant Pills */}
-                      {product.variants && product.variants.length > 0 && (
+                      {Array.isArray(product.variants) && product.variants.length > 0 && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px', borderTop: '1px solid #fef5f7', paddingTop: '10px' }}>
                           {(() => {
                             const colors = [...new Set(product.variants.map(v => v.color).filter(Boolean))];
@@ -958,11 +969,11 @@ function App() {
         {/* ADMIN CONSOLE DASHBOARD VIEW */}
         {view === 'admin' && isLoggedIn && (
           <div className="container">
-            <div style={{ display: 'flex', gap: '30px', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', gap: '30px', alignItems: 'flex-start', flexDirection: isMobile ? 'column' : 'row' }}>
               
               {/* Dashboard Navigation Sidebar */}
               <aside className="glass" style={{
-                width: '260px',
+                width: isMobile ? '100%' : '260px',
                 borderRadius: 'var(--radius-md)',
                 padding: '24px',
                 display: 'flex',
@@ -1070,7 +1081,7 @@ function App() {
                                       </span>
                                     )}
                                   </div>
-                                  {product.variants && product.variants.length > 0 && (
+                                  {Array.isArray(product.variants) && product.variants.length > 0 && (
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '6px' }}>
                                       {product.variants.map((v, idx) => (
                                         <span key={idx} style={{ fontSize: '0.72rem', backgroundColor: 'var(--color-accent-dim)', border: '1px solid var(--color-border)', padding: '2px 6px', borderRadius: '4px', color: 'var(--color-text-main)' }}>
@@ -1272,18 +1283,21 @@ function App() {
           backgroundColor: 'rgba(10, 8, 9, 0.85)',
           display: 'flex',
           justifyContent: 'center',
-          alignItems: 'center',
+          alignItems: 'flex-start',
+          overflowY: 'auto',
+          padding: '40px 20px',
           zIndex: 1000,
           backdropFilter: 'blur(8px)'
         }}>
           <div className="glass" style={{
-            width: '90%',
+            width: '100%',
             maxWidth: '850px',
             borderRadius: 'var(--radius-md)',
             boxShadow: 'var(--shadow-lg)',
             overflow: 'hidden',
-            display: 'flex',
-            position: 'relative'
+            display: isMobile ? 'block' : 'flex',
+            position: 'relative',
+            margin: '0 auto'
           }}>
             <button 
               onClick={() => setSelectedProduct(null)}
@@ -1308,21 +1322,21 @@ function App() {
             </button>
 
             <div className="grid grid-cols-2" style={{ gap: 0, width: '100%' }}>
-              <div style={{ height: '500px', backgroundColor: '#231c1e' }}>
+              <div style={{ height: isMobile ? '300px' : '500px', backgroundColor: '#231c1e' }}>
                 <img 
                   src={selectedProduct.imageUrl} 
                   alt={selectedProduct.name} 
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
               </div>
-              <div style={{ padding: '40px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <div style={{ padding: isMobile ? '24px' : '40px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 <h2 style={{ fontSize: '2rem', marginBottom: '12px' }}>{selectedProduct.name}</h2>
                 <p style={{ color: 'var(--color-text-muted)', marginBottom: '18px', fontSize: '1rem' }}>
                   {selectedProduct.description}
                 </p>
                 
                 {/* Customer Modal Variant Info */}
-                {selectedProduct.variants && selectedProduct.variants.length > 0 && (
+                {Array.isArray(selectedProduct.variants) && selectedProduct.variants.length > 0 && (
                   <div style={{ marginBottom: '24px' }}>
                     <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', letterSpacing: '0.8px', fontWeight: 600 }}>
                       Available Options
@@ -1396,21 +1410,24 @@ function App() {
           backgroundColor: 'rgba(10, 8, 9, 0.85)',
           display: 'flex',
           justifyContent: 'center',
-          alignItems: 'center',
+          alignItems: 'flex-start',
+          overflowY: 'auto',
+          padding: '40px 20px',
           zIndex: 1000,
           backdropFilter: 'blur(8px)'
         }}>
           <div className="glass shadow-lg" style={{
-            width: '90%',
+            width: '100%',
             maxWidth: '550px',
             borderRadius: 'var(--radius-md)',
             overflow: 'hidden',
             position: 'relative',
-            padding: '40px',
+            padding: isMobile ? '24px' : '40px',
             textAlign: 'center',
             backgroundColor: 'var(--color-bg-card)',
             border: '1px solid var(--color-border)',
-            animation: 'fadeIn 0.3s ease'
+            animation: 'fadeIn 0.3s ease',
+            margin: '0 auto'
           }}>
             <button 
               onClick={() => setShowAboutModal(false)}
@@ -1478,21 +1495,24 @@ function App() {
           backgroundColor: 'rgba(10, 8, 9, 0.85)',
           display: 'flex',
           justifyContent: 'center',
-          alignItems: 'center',
+          alignItems: 'flex-start',
+          overflowY: 'auto',
+          padding: '40px 20px',
           zIndex: 1000,
           backdropFilter: 'blur(8px)'
         }}>
           <div className="glass shadow-lg" style={{
-            width: '90%',
+            width: '100%',
             maxWidth: '550px',
             borderRadius: 'var(--radius-md)',
             overflow: 'hidden',
             position: 'relative',
-            padding: '40px',
+            padding: isMobile ? '24px' : '40px',
             textAlign: 'center',
             backgroundColor: 'var(--color-bg-card)',
             border: '1px solid var(--color-border)',
-            animation: 'fadeIn 0.3s ease'
+            animation: 'fadeIn 0.3s ease',
+            margin: '0 auto'
           }}>
             <button 
               onClick={() => setShowContactModal(false)}
@@ -1658,16 +1678,16 @@ function App() {
                 <input 
                   type="number" 
                   className="form-input" 
-                  value={productForm.variants && productForm.variants.length > 0 
+                  value={Array.isArray(productForm.variants) && productForm.variants.length > 0 
                     ? productForm.variants.reduce((sum, v) => sum + Number(v.stock || 0), 0)
                     : productForm.stock
                   }
                   onChange={(e) => setProductForm({ ...productForm, stock: Number(e.target.value) })}
                   placeholder="20"
-                  disabled={productForm.variants && productForm.variants.length > 0}
+                  disabled={Array.isArray(productForm.variants) && productForm.variants.length > 0}
                   required
                 />
-                {productForm.variants && productForm.variants.length > 0 && (
+                {Array.isArray(productForm.variants) && productForm.variants.length > 0 && (
                   <span style={{ fontSize: '0.72rem', color: 'var(--color-primary)' }}>
                     Calculated automatically from variant stocks.
                   </span>
@@ -1685,7 +1705,7 @@ function App() {
                   type="button" 
                   onClick={() => setProductForm({
                     ...productForm,
-                    variants: [...(productForm.variants || []), { color: '', size: '', stock: 0 }]
+                    variants: [...(Array.isArray(productForm.variants) ? productForm.variants : []), { color: '', size: '', stock: 0 }]
                   })}
                   className="btn btn-secondary"
                   style={{ padding: '6px 12px', fontSize: '0.75rem', borderRadius: '6px' }}
@@ -1694,7 +1714,7 @@ function App() {
                 </button>
               </div>
 
-              {productForm.variants && productForm.variants.length > 0 ? (
+              {Array.isArray(productForm.variants) && productForm.variants.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '180px', overflowY: 'auto', paddingRight: '8px', marginBottom: '10px' }}>
                   {productForm.variants.map((v, index) => (
                     <div key={index} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
