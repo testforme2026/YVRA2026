@@ -25,7 +25,7 @@ const API_BASE = import.meta.env.VITE_API_URL || (window.location.origin.include
   : '');
 
 const getColorHex = (color) => {
-  if (!color) return 'transparent';
+  if (!color || typeof color !== 'string') return 'transparent';
   const name = color.trim().toLowerCase();
   const map = {
     'black': '#000000',
@@ -50,6 +50,47 @@ const getColorHex = (color) => {
   return map[name] || name;
 };
 
+const normalizeVariants = (variants) => {
+  if (!Array.isArray(variants)) return [];
+  return variants.map(v => {
+    if (v && typeof v === 'object') {
+      return {
+        color: typeof v.color === 'string' ? v.color.trim() : String(v.color || ''),
+        size: typeof v.size === 'string' ? v.size.trim() : String(v.size || ''),
+        stock: isNaN(Number(v.stock)) ? 0 : Number(v.stock)
+      };
+    } else if (typeof v === 'string') {
+      const parts = v.split('/');
+      return {
+        color: parts[0]?.trim() || '',
+        size: parts[1]?.trim() || '',
+        stock: 0
+      };
+    } else {
+      return { color: '', size: '', stock: 0 };
+    }
+  });
+};
+
+const normalizeProduct = (p) => {
+  if (!p) return null;
+  return {
+    ...p,
+    price: isNaN(Number(p.price)) ? 0 : Number(p.price),
+    stock: isNaN(Number(p.stock)) ? 0 : Number(p.stock),
+    variants: normalizeVariants(p.variants),
+    description: p.description || '',
+    imageUrl: p.imageUrl || '',
+    featured: !!p.featured
+  };
+};
+
+const formatPrice = (price) => {
+  if (price === undefined || price === null || price === '') return '0';
+  const num = Number(price);
+  return isNaN(num) ? String(price) : num.toLocaleString();
+};
+
 function App() {
   // Navigation & Auth States
   const [view, setView] = useState('storefront'); // 'storefront' | 'login' | 'admin'
@@ -59,10 +100,15 @@ function App() {
   const [loginPassword, setLoginPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isSmallHeight, setIsSmallHeight] = useState(window.innerHeight <= 600);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+      setIsSmallHeight(window.innerHeight <= 600);
+    };
     window.addEventListener('resize', handleResize);
+    handleResize();
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
@@ -105,13 +151,6 @@ function App() {
   // Fetch initial data
   useEffect(() => {
     fetchData();
-
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const fetchData = async () => {
@@ -119,11 +158,21 @@ function App() {
     try {
       const prodRes = await fetch(`${API_BASE}/api/v1/products?t=${Date.now()}`);
       const prodData = await prodRes.json();
-      setProducts(prodData);
+      const normalizedProducts = Array.isArray(prodData) ? prodData.map(normalizeProduct).filter(Boolean) : [];
+      setProducts(normalizedProducts);
 
       const setRes = await fetch(`${API_BASE}/api/v1/settings?t=${Date.now()}`);
       const setData = await setRes.json();
-      setSettings(setData);
+      setSettings({
+        address: setData.address || '',
+        phone: setData.phone || '',
+        tiktok: setData.tiktok || '',
+        greetings: setData.greetings || '',
+        payment: setData.payment || '',
+        tagline: setData.tagline || '',
+        aboutText: setData.aboutText || '',
+        contactText: setData.contactText || ''
+      });
     } catch (error) {
       console.error('Error fetching data from API:', error);
       showNotification('Failed to load data from backend. Make sure the server is running.', 'error');
@@ -178,15 +227,16 @@ function App() {
   };
 
   const openEditModal = (product) => {
+    const norm = normalizeProduct(product);
     setProductForm({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      stock: product.stock,
-      description: product.description || '',
-      imageUrl: product.imageUrl || '',
-      variants: Array.isArray(product.variants) ? product.variants : [],
-      featured: product.featured || false
+      id: norm.id,
+      name: norm.name,
+      price: norm.price,
+      stock: norm.stock,
+      description: norm.description,
+      imageUrl: norm.imageUrl,
+      variants: norm.variants,
+      featured: norm.featured
     });
     setIsEditMode(true);
     setImageUploading(false);
@@ -611,7 +661,7 @@ function App() {
 
               {/* Right Column: Hero Visual Frame */}
               {!isMobile && (
-                <div style={{ position: 'relative', width: '100%', height: '560px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ position: 'relative', width: '100%', height: 'min(560px, 65vh)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {/* Background decorative flower shapes */}
                   <div className="floral-accent" style={{ top: '-40px', right: '-20px', width: '140px', height: '140px', transform: 'rotate(15deg)', opacity: 0.18 }} />
                   <div className="floral-accent" style={{ bottom: '-30px', left: '-50px', width: '100px', height: '100px', transform: 'rotate(-45deg)', opacity: 0.12 }} />
@@ -681,7 +731,7 @@ function App() {
                         {featuredProduct ? featuredProduct.name : "YVRA Blossom"}
                       </span>
                       <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--color-primary)', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', marginTop: '2px' }}>
-                        {featuredProduct ? `${featuredProduct.price.toLocaleString()} MMK (Featured)` : "Premium Collection"}
+                        {featuredProduct ? `${formatPrice(featuredProduct.price)} MMK (Featured)` : "Premium Collection"}
                       </span>
                     </div>
                   </div>
@@ -869,7 +919,7 @@ function App() {
                       
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', borderTop: '1px solid #fef5f7', paddingTop: '12px' }}>
                         <span style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--color-primary)' }}>
-                          {product.price.toLocaleString()} MMK
+                          {formatPrice(product.price)} MMK
                         </span>
                         <span style={{ fontSize: '0.82rem', color: product.stock > 0 ? '#4a6e4d' : '#f25f5c', fontWeight: 600 }}>
                           {product.stock > 0 ? `Stock: ${product.stock}` : 'Out of Stock'}
@@ -889,11 +939,11 @@ function App() {
             <div className="glass" style={{
               width: '100%',
               maxWidth: '450px',
-              padding: '40px',
+              padding: (isMobile || isSmallHeight) ? '24px 16px' : '40px',
               borderRadius: 'var(--radius-md)',
               boxShadow: 'var(--shadow-lg)'
             }}>
-              <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+              <div style={{ textAlign: 'center', marginBottom: (isMobile || isSmallHeight) ? '16px' : '32px' }}>
                 <div style={{
                   width: '60px',
                   height: '60px',
@@ -971,50 +1021,55 @@ function App() {
           <div className="container">
             <div style={{ display: 'flex', gap: '30px', alignItems: 'flex-start', flexDirection: isMobile ? 'column' : 'row' }}>
               
-              {/* Dashboard Navigation Sidebar */}
               <aside className="glass" style={{
                 width: isMobile ? '100%' : '260px',
                 borderRadius: 'var(--radius-md)',
-                padding: '24px',
+                padding: isMobile ? '12px' : '24px',
                 display: 'flex',
-                flexDirection: 'column',
-                gap: '8px'
+                flexDirection: isMobile ? 'row' : 'column',
+                gap: '8px',
+                alignItems: 'center',
+                flexWrap: 'wrap'
               }}>
-                <div style={{ padding: '0 8px 16px 8px', borderBottom: '1px solid var(--color-border)', marginBottom: '16px' }}>
-                  <h3 style={{ fontSize: '1.2rem', color: 'var(--color-primary)' }}>Control Console</h3>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>admin@yvra.com</span>
-                </div>
+                {!isMobile && (
+                  <div style={{ width: '100%', padding: '0 8px 16px 8px', borderBottom: '1px solid var(--color-border)', marginBottom: '16px' }}>
+                    <h3 style={{ fontSize: '1.2rem', color: 'var(--color-primary)' }}>Control Console</h3>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>admin@yvra.com</span>
+                  </div>
+                )}
 
                 <button 
                   onClick={() => setAdminTab('products')}
                   className="btn"
                   style={{
-                    justifyContent: 'flex-start',
+                    justifyContent: 'center',
+                    flex: isMobile ? 1 : 'none',
                     backgroundColor: adminTab === 'products' ? 'var(--color-accent-dim)' : 'transparent',
                     border: '1px solid',
                     borderColor: adminTab === 'products' ? 'var(--color-primary)' : 'transparent',
                     color: adminTab === 'products' ? 'var(--color-primary)' : 'var(--color-text-main)',
-                    width: '100%'
+                    width: isMobile ? 'auto' : '100%'
                   }}
                 >
                   <Layout size={18} />
-                  <span>Manage Products</span>
+                  <span>{isMobile ? 'Products' : 'Manage Products'}</span>
                 </button>
 
                 <button 
                   onClick={() => setAdminTab('settings')}
                   className="btn"
                   style={{
-                    justifyContent: 'flex-start',
+                    justifyContent: 'center',
+                    flex: isMobile ? 1 : 'none',
                     backgroundColor: adminTab === 'settings' ? 'var(--color-accent-dim)' : 'transparent',
                     border: '1px solid',
                     borderColor: adminTab === 'settings' ? 'var(--color-primary)' : 'transparent',
                     color: adminTab === 'settings' ? 'var(--color-primary)' : 'var(--color-text-main)',
-                    width: '100%'
+                    width: isMobile ? 'auto' : '100%'
                   }}
                 >
                   <Settings size={18} />
-                  <span>Shop Settings</span>
+                  <span>{isMobile ? 'Settings' : 'Shop Settings'}</span>
                 </button>
               </aside>
 
@@ -1042,7 +1097,8 @@ function App() {
                       </div>
                     ) : (
                       <div className="glass" style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                        <div style={{ overflowX: 'auto', width: '100%' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: isMobile ? '700px' : 'auto' }}>
                           <thead>
                             <tr style={{ backgroundColor: 'var(--color-border)', borderBottom: '1px solid var(--color-border)' }}>
                               <th style={{ padding: '16px 20px', fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Image</th>
@@ -1091,7 +1147,7 @@ function App() {
                                     </div>
                                   )}
                                 </td>
-                                <td style={{ padding: '16px 20px', color: 'var(--color-primary)' }}>{product.price.toLocaleString()} MMK</td>
+                                <td style={{ padding: '16px 20px', color: 'var(--color-primary)' }}>{formatPrice(product.price)} MMK</td>
                                 <td style={{ padding: '16px 20px' }}>
                                   <span style={{ 
                                     padding: '4px 8px', 
@@ -1127,7 +1183,8 @@ function App() {
                           </tbody>
                         </table>
                       </div>
-                    )}
+                    </div>
+                  )}
                   </div>
                 )}
 
@@ -1136,7 +1193,7 @@ function App() {
                   <div>
                     <h2 style={{ marginBottom: '24px' }}>Shop & Chatbot Configuration</h2>
                     
-                    <form onSubmit={handleSettingsSubmit} className="glass" style={{ padding: '40px', borderRadius: 'var(--radius-md)' }}>
+                    <form onSubmit={handleSettingsSubmit} className="glass" style={{ padding: (isMobile || isSmallHeight) ? '20px 16px' : '40px', borderRadius: 'var(--radius-md)' }}>
                       <div className="form-group">
                         <label>Collection Tagline (စုစည်းမှု ခေါင်းစဉ်တို)</label>
                         <input 
@@ -1322,22 +1379,22 @@ function App() {
             </button>
 
             <div className="grid grid-cols-2" style={{ gap: 0, width: '100%' }}>
-              <div style={{ height: isMobile ? '300px' : '500px', backgroundColor: '#231c1e' }}>
+              <div style={{ height: (isMobile || isSmallHeight) ? '300px' : '500px', backgroundColor: '#231c1e' }}>
                 <img 
                   src={selectedProduct.imageUrl} 
                   alt={selectedProduct.name} 
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
               </div>
-              <div style={{ padding: isMobile ? '24px' : '40px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <h2 style={{ fontSize: '2rem', marginBottom: '12px' }}>{selectedProduct.name}</h2>
-                <p style={{ color: 'var(--color-text-muted)', marginBottom: '18px', fontSize: '1rem' }}>
+              <div style={{ padding: (isMobile || isSmallHeight) ? '20px' : '40px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <h2 style={{ fontSize: (isMobile || isSmallHeight) ? '1.5rem' : '2rem', marginBottom: '12px' }}>{selectedProduct.name}</h2>
+                <p style={{ color: 'var(--color-text-muted)', marginBottom: (isMobile || isSmallHeight) ? '10px' : '18px', fontSize: '0.95rem' }}>
                   {selectedProduct.description}
                 </p>
                 
                 {/* Customer Modal Variant Info */}
                 {Array.isArray(selectedProduct.variants) && selectedProduct.variants.length > 0 && (
-                  <div style={{ marginBottom: '24px' }}>
+                  <div style={{ marginBottom: (isMobile || isSmallHeight) ? '12px' : '24px' }}>
                     <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', letterSpacing: '0.8px', fontWeight: 600 }}>
                       Available Options
                     </h4>
@@ -1373,9 +1430,9 @@ function App() {
                   </div>
                 )}
 
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '16px', marginBottom: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '16px', marginBottom: (isMobile || isSmallHeight) ? '12px' : '24px' }}>
                   <span style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--color-primary)' }}>
-                    {selectedProduct.price.toLocaleString()} MMK
+                    {formatPrice(selectedProduct.price)} MMK
                   </span>
                   <span style={{ fontSize: '0.9rem', color: selectedProduct.stock > 0 ? '#63c373' : '#e63946', fontWeight: 600 }}>
                     {selectedProduct.stock > 0 ? `In Stock (${selectedProduct.stock} left)` : 'Out of Stock'}
@@ -1422,7 +1479,7 @@ function App() {
             borderRadius: 'var(--radius-md)',
             overflow: 'hidden',
             position: 'relative',
-            padding: isMobile ? '24px' : '40px',
+            padding: (isMobile || isSmallHeight) ? '24px 16px' : '40px',
             textAlign: 'center',
             backgroundColor: 'var(--color-bg-card)',
             border: '1px solid var(--color-border)',
@@ -1451,26 +1508,26 @@ function App() {
               <X size={20} />
             </button>
 
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: (isMobile || isSmallHeight) ? '10px' : '20px' }}>
               <img 
                 src="/yvra.png" 
                 alt="YVRA Logo" 
                 style={{ 
-                  height: '150px', 
+                  height: (isMobile || isSmallHeight) ? '80px' : '150px', 
                   objectFit: 'contain'
                 }} 
               />
             </div>
 
-            <h2 style={{ fontSize: '2rem', fontFamily: 'var(--font-heading)', color: '#421a22', marginBottom: '18px' }}>
+            <h2 style={{ fontSize: (isMobile || isSmallHeight) ? '1.5rem' : '2rem', fontFamily: 'var(--font-heading)', color: '#421a22', marginBottom: (isMobile || isSmallHeight) ? '10px' : '18px' }}>
               About YVRA Boutique
             </h2>
             
             <p style={{
-              fontSize: '1.1rem',
+              fontSize: (isMobile || isSmallHeight) ? '0.95rem' : '1.1rem',
               color: 'var(--color-text-main)',
               lineHeight: '1.7',
-              marginBottom: '24px',
+              marginBottom: (isMobile || isSmallHeight) ? '16px' : '24px',
               textAlign: 'center',
               whiteSpace: 'pre-wrap'
             }}>
@@ -1507,7 +1564,7 @@ function App() {
             borderRadius: 'var(--radius-md)',
             overflow: 'hidden',
             position: 'relative',
-            padding: isMobile ? '24px' : '40px',
+            padding: (isMobile || isSmallHeight) ? '24px 16px' : '40px',
             textAlign: 'center',
             backgroundColor: 'var(--color-bg-card)',
             border: '1px solid var(--color-border)',
@@ -1536,33 +1593,33 @@ function App() {
               <X size={20} />
             </button>
 
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: (isMobile || isSmallHeight) ? '10px' : '20px' }}>
               <img 
                 src="/yvra.png" 
                 alt="YVRA Logo" 
                 style={{ 
-                  height: '150px', 
+                  height: (isMobile || isSmallHeight) ? '80px' : '150px', 
                   objectFit: 'contain'
                 }} 
               />
             </div>
 
-            <h2 style={{ fontSize: '2rem', fontFamily: 'var(--font-heading)', color: '#421a22', marginBottom: '18px' }}>
+            <h2 style={{ fontSize: (isMobile || isSmallHeight) ? '1.5rem' : '2rem', fontFamily: 'var(--font-heading)', color: '#421a22', marginBottom: (isMobile || isSmallHeight) ? '10px' : '18px' }}>
               Contact YVRA
             </h2>
 
             <p style={{
-              fontSize: '1.05rem',
+              fontSize: (isMobile || isSmallHeight) ? '0.95rem' : '1.05rem',
               color: 'var(--color-text-main)',
               lineHeight: '1.6',
-              marginBottom: '24px',
+              marginBottom: (isMobile || isSmallHeight) ? '12px' : '24px',
               textAlign: 'center',
               whiteSpace: 'pre-wrap'
             }}>
               {settings.contactText || 'ဆိုင်သို့ အောက်ပါ ဖုန်း သို့မဟုတ် လိပ်စာများအတိုင်း ဆက်သွယ်စုံစမ်းနိုင်ပါတယ်ရှင်။'}
             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: (isMobile || isSmallHeight) ? '8px' : '12px', marginBottom: (isMobile || isSmallHeight) ? '12px' : '24px' }}>
               <a 
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(settings.address)}`}
                 target="_blank" 
@@ -1624,7 +1681,7 @@ function App() {
           <form onSubmit={handleProductSubmit} className="glass" style={{
             width: '100%',
             maxWidth: '550px',
-            padding: '40px',
+            padding: (isMobile || isSmallHeight) ? '20px 16px' : '40px',
             borderRadius: 'var(--radius-md)',
             position: 'relative',
             margin: '0 auto'
@@ -1645,11 +1702,14 @@ function App() {
               <X size={24} />
             </button>
 
-            <h2 style={{ marginBottom: '24px' }}>
+            <h2 style={{ 
+              marginBottom: (isMobile || isSmallHeight) ? '12px' : '24px',
+              fontSize: (isMobile || isSmallHeight) ? '1.5rem' : '2rem'
+            }}>
               {isEditMode ? 'Modify Product' : 'Add Product to Catalog'}
             </h2>
 
-            <div className="form-group">
+            <div className="form-group" style={{ marginBottom: (isMobile || isSmallHeight) ? '12px' : '20px' }}>
               <label>Product Name</label>
               <input 
                 type="text" 
@@ -1661,8 +1721,8 @@ function App() {
               />
             </div>
 
-            <div className="grid grid-cols-2" style={{ gap: '16px' }}>
-              <div className="form-group">
+            <div className="grid grid-cols-2" style={{ gap: (isMobile || isSmallHeight) ? '10px' : '16px' }}>
+              <div className="form-group" style={{ marginBottom: (isMobile || isSmallHeight) ? '12px' : '20px' }}>
                 <label>Price (MMK)</label>
                 <input 
                   type="number" 
@@ -1673,7 +1733,7 @@ function App() {
                   required
                 />
               </div>
-              <div className="form-group">
+              <div className="form-group" style={{ marginBottom: (isMobile || isSmallHeight) ? '12px' : '20px' }}>
                 <label>Stock Count</label>
                 <input 
                   type="number" 
@@ -1696,7 +1756,7 @@ function App() {
             </div>
 
             {/* Dynamic Variants Setup */}
-            <div style={{ marginBottom: '20px', borderTop: '1px solid var(--color-border)', paddingTop: '20px' }}>
+            <div style={{ marginBottom: (isMobile || isSmallHeight) ? '12px' : '20px', borderTop: '1px solid var(--color-border)', paddingTop: (isMobile || isSmallHeight) ? '12px' : '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                 <span style={{ fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--color-text-muted)', letterSpacing: '0.8px' }}>
                   Product Variants (Colors, Sizes, Stocks)
@@ -1725,8 +1785,9 @@ function App() {
                         style={{ padding: '8px 12px', fontSize: '0.85rem' }}
                         value={v.color}
                         onChange={(e) => {
-                          const newVariants = [...productForm.variants];
-                          newVariants[index].color = e.target.value;
+                          const newVariants = productForm.variants.map((item, idx) => 
+                            idx === index ? { ...item, color: e.target.value } : item
+                          );
                           setProductForm({ ...productForm, variants: newVariants });
                         }}
                         required
@@ -1738,8 +1799,9 @@ function App() {
                         style={{ padding: '8px 12px', fontSize: '0.85rem', width: '90px' }}
                         value={v.size}
                         onChange={(e) => {
-                          const newVariants = [...productForm.variants];
-                          newVariants[index].size = e.target.value;
+                          const newVariants = productForm.variants.map((item, idx) => 
+                            idx === index ? { ...item, size: e.target.value } : item
+                          );
                           setProductForm({ ...productForm, variants: newVariants });
                         }}
                         required
@@ -1751,8 +1813,9 @@ function App() {
                         style={{ padding: '8px 12px', fontSize: '0.85rem', width: '90px' }}
                         value={v.stock}
                         onChange={(e) => {
-                          const newVariants = [...productForm.variants];
-                          newVariants[index].stock = parseInt(e.target.value) || 0;
+                          const newVariants = productForm.variants.map((item, idx) => 
+                            idx === index ? { ...item, stock: parseInt(e.target.value) || 0 } : item
+                          );
                           setProductForm({ ...productForm, variants: newVariants });
                         }}
                         min="0"
@@ -1876,7 +1939,7 @@ function App() {
               )}
             </div>
 
-            <div className="form-group">
+            <div className="form-group" style={{ marginBottom: (isMobile || isSmallHeight) ? '12px' : '20px' }}>
               <label>Description (Burmese)</label>
               <textarea 
                 className="form-input" 
@@ -1886,7 +1949,7 @@ function App() {
               />
             </div>
 
-            <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', marginBottom: '20px' }}>
+            <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', marginBottom: (isMobile || isSmallHeight) ? '12px' : '20px' }}>
               <input 
                 type="checkbox" 
                 id="featured"
