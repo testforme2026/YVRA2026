@@ -16,7 +16,8 @@ import {
   Layout, 
   Save, 
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Upload
 } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || (window.location.origin.includes('5173') 
@@ -98,6 +99,8 @@ function App() {
   });
   const [showProductModal, setShowProductModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState('');
 
   // Fetch initial data
   useEffect(() => {
@@ -162,6 +165,8 @@ function App() {
       featured: false
     });
     setIsEditMode(false);
+    setImageUploading(false);
+    setImageUploadError('');
     setShowProductModal(true);
   };
 
@@ -177,7 +182,44 @@ function App() {
       featured: product.featured || false
     });
     setIsEditMode(true);
+    setImageUploading(false);
+    setImageUploadError('');
     setShowProductModal(true);
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'de9n1rltf';
+    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'ml_default';
+
+    setImageUploading(true);
+    setImageUploadError('');
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', uploadPreset);
+
+    try {
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error?.message || 'Upload failed');
+      }
+
+      const data = await res.json();
+      setProductForm(prev => ({ ...prev, imageUrl: data.secure_url }));
+    } catch (error) {
+      console.error('Cloudinary upload error:', error);
+      setImageUploadError(error.message || 'Image upload failed. Please try again.');
+    } finally {
+      setImageUploading(false);
+    }
   };
 
   const handleProductSubmit = async (e) => {
@@ -1553,16 +1595,19 @@ function App() {
           backgroundColor: 'rgba(10, 8, 9, 0.85)',
           display: 'flex',
           justifyContent: 'center',
-          alignItems: 'center',
+          alignItems: 'flex-start',
+          overflowY: 'auto',
+          padding: '40px 20px',
           zIndex: 1000,
           backdropFilter: 'blur(8px)'
         }}>
           <form onSubmit={handleProductSubmit} className="glass" style={{
-            width: '95%',
+            width: '100%',
             maxWidth: '550px',
             padding: '40px',
             borderRadius: 'var(--radius-md)',
-            position: 'relative'
+            position: 'relative',
+            margin: '0 auto'
           }}>
             <button 
               type="button"
@@ -1714,15 +1759,101 @@ function App() {
               )}
             </div>
 
-            <div className="form-group">
-              <label>Product Image URL</label>
-              <input 
-                type="url" 
-                className="form-input" 
-                value={productForm.imageUrl}
-                onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })}
-                placeholder="https://images.unsplash.com/..."
-              />
+            <div className="form-group" style={{ marginBottom: '20px' }}>
+              <label>Product Image</label>
+              
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '10px' }}>
+                {productForm.imageUrl ? (
+                  <div style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--color-border)' }}>
+                    <img 
+                      src={productForm.imageUrl} 
+                      alt="Product Preview" 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setProductForm({ ...productForm, imageUrl: '' })}
+                      style={{
+                        position: 'absolute',
+                        top: '4px',
+                        right: '4px',
+                        backgroundColor: 'rgba(214, 91, 124, 0.9)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '20px',
+                        height: '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '12px'
+                      }}
+                      title="Remove image"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ 
+                    width: '80px', 
+                    height: '80px', 
+                    borderRadius: '8px', 
+                    border: '2px dashed var(--color-border)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    color: 'var(--color-text-muted)',
+                    fontSize: '0.75rem',
+                    textAlign: 'center',
+                    backgroundColor: 'rgba(255,255,255,0.02)'
+                  }}>
+                    No Image
+                  </div>
+                )}
+
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <label className="btn btn-secondary" style={{ 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      gap: '6px', 
+                      cursor: 'pointer',
+                      margin: 0,
+                      padding: '8px 16px',
+                      fontSize: '0.82rem',
+                      borderRadius: '8px'
+                    }}>
+                      <Upload size={14} />
+                      {imageUploading ? 'Uploading...' : 'Upload File'}
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        style={{ display: 'none' }} 
+                        onChange={handleImageUpload}
+                        disabled={imageUploading}
+                      />
+                    </label>
+                    
+                    <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', alignSelf: 'center' }}>or</span>
+                  </div>
+
+                  <input 
+                    type="url" 
+                    className="form-input" 
+                    value={productForm.imageUrl}
+                    onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })}
+                    placeholder="Paste Image URL here..."
+                    style={{ margin: 0, padding: '8px 12px', fontSize: '0.85rem' }}
+                  />
+                </div>
+              </div>
+
+              {imageUploadError && (
+                <div style={{ color: '#ff4d4d', fontSize: '0.78rem', marginTop: '6px' }}>
+                  {imageUploadError}
+                </div>
+              )}
             </div>
 
             <div className="form-group">
